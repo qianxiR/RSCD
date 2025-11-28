@@ -1,0 +1,35 @@
+# 基础依赖
+opencv-python
+pillow
+numpy>=1.21.0,<1.25.0
+requests
+psutil
+scikit-image
+scipy>=1.7.0,<2.0.0
+tqdm
+einops
+fvcore
+pytorchvideo
+albumentations
+
+# Web框架依赖
+fastapi
+uvicorn[standard]
+python-multipart
+aiofiles
+
+# 地理空间依赖 (通过conda安装)
+# gdal
+# geopandas
+# rasterio
+# fiona
+# shapely
+# pyproj
+
+# 深度学习依赖 (通过pip安装)
+# torch
+# torchvision
+# torchaudio
+
+# 其他工具
+python-dotenv
