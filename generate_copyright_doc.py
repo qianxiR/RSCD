@@ -18,13 +18,13 @@ from docx.oxml.ns import qn
 PROJECT_ROOT = r"E:\1代码\系统\RSCD"
 
 # 每页代码行数(不含空行和注释)
-LINES_PER_PAGE = 30
+LINES_PER_PAGE = 40
 
 # 目标页数
-TARGET_PAGES = 60
+TARGET_PAGES = 80
 
 # 目标代码行数
-TARGET_LINES = TARGET_PAGES * LINES_PER_PAGE  # 1800行
+TARGET_LINES = TARGET_PAGES * LINES_PER_PAGE  # 3200行
 
 # 排除的入口文件
 EXCLUDED_FILES = [
@@ -32,48 +32,48 @@ EXCLUDED_FILES = [
     "__main__.py",
 ]
 
-# 核心源代码文件列表(按优先级排序)
+# 核心源代码文件列表(按软著要求优先级排序: utils/config > data > service > loss/metric > model)
 CORE_FILES = [
-    # 模型定义
-    "change3d_docker/model/x3d.py",
-    "change3d_docker/model/change_decoder.py",
-    "change3d_docker/model/trainer.py",
+    # ========== 10分: 配置与工具模块 ==========
+    "change3d_docker/paths.py",
     "change3d_docker/model/utils.py",
+    "zhuyaogongneng_docker/theme_manager.py",
+    "zhuyaogongneng_docker/display.py",
+    "zhuyaogongneng_docker/function/theme_utils.py",
+    "change3d_api_docker/path_connector.py",
 
-    # 数据处理
+    # ========== 9分: 数据处理模块 ==========
     "change3d_docker/data/dataset.py",
     "change3d_docker/data/transforms.py",
+    "zhuyaogongneng_docker/function/import_before_image.py",
+    "zhuyaogongneng_docker/function/import_after_image.py",
+    "zhuyaogongneng_docker/function/raster/import_module.py",
+    "zhuyaogongneng_docker/function/raster/grid.py",
 
-    # API服务
-    "change3d_api_docker/change_detection_model.py",
+    # ========== 8分: 服务与业务逻辑 ==========
     "change3d_api_docker/main.py",
-
-    # 图像处理脚本
+    "change3d_api_docker/change_detection_model.py",
+    "zhuyaogongneng_docker/app.py",
+    "zhuyaogongneng_docker/function/change_cd.py",
+    "zhuyaogongneng_docker/function/detection_client.py",
+    "zhuyaogongneng_docker/function/batch_processing.py",
+    "zhuyaogongneng_docker/function/fishnet_fenge.py",
+    "zhuyaogongneng_docker/function/image_display.py",
+    "zhuyaogongneng_docker/function/raster.py",
+    "zhuyaogongneng_docker/function/raster/batch_processor.py",
+    "zhuyaogongneng_docker/function/raster/detection.py",
     "change3d_docker/scripts_app/large_image_BCD.py",
     "change3d_docker/scripts_app/large_raster_BCD.py",
     "change3d_docker/scripts_app/batch_image_BCD.py",
     "change3d_docker/scripts_app/batch_raster_BCD.py",
 
-    # GUI核心功能
-    "zhuyaogongneng_docker/app.py",
-    "zhuyaogongneng_docker/function/change_cd.py",
-    "zhuyaogongneng_docker/function/import_before_image.py",
-    "zhuyaogongneng_docker/function/import_after_image.py",
-    "zhuyaogongneng_docker/function/fishnet_fenge.py",
-    "zhuyaogongneng_docker/function/image_display.py",
-
-    # 栅格处理
-    "zhuyaogongneng_docker/function/raster.py",
-    "zhuyaogongneng_docker/function/raster/grid.py",
-    "zhuyaogongneng_docker/function/raster/import_module.py",
-    "zhuyaogongneng_docker/function/raster/batch_processor.py",
-    "zhuyaogongneng_docker/function/raster/detection.py",
-
-    # 工具模块
-    "zhuyaogongneng_docker/display.py",
-    "zhuyaogongneng_docker/theme_manager.py",
+    # ========== 4分: 评估与度量 ==========
     "change3d_docker/utils/metric_tool.py",
-    "change3d_docker/paths.py",
+
+    # ========== 3分: 核心模型与算法(保留核心代码确保软著保护价值) ==========
+    "change3d_docker/model/x3d.py",
+    "change3d_docker/model/change_decoder.py",
+    "change3d_docker/model/trainer.py",
 ]
 
 def is_effective_code_line(line):
@@ -181,7 +181,7 @@ def add_code_to_document(doc, file_path, remaining_lines, line_numbers=True, sta
         if line_numbers:
             line_num_run = code_para.add_run(f"{current_line_number:4d}: ")
             line_num_run.font.name = 'Consolas'
-            line_num_run.font.size = Pt(8)
+            line_num_run.font.size = Pt(10)
             line_num_run.font.color.rgb = RGBColor(100, 100, 100)
             current_line_number += 1
 
@@ -192,7 +192,7 @@ def add_code_to_document(doc, file_path, remaining_lines, line_numbers=True, sta
 
         code_run = code_para.add_run(code_line.rstrip())
         code_run.font.name = 'Consolas'
-        code_run.font.size = Pt(8)
+        code_run.font.size = Pt(10)
         code_run.font.color.rgb = RGBColor(0, 0, 0)
 
     # 不添加空行分隔 - 保持纯代码连续性
@@ -215,7 +215,7 @@ def generate_document():
     # 设置文档默认字体
     doc.styles['Normal'].font.name = 'Consolas'
     doc.styles['Normal']._element.rPr.rFonts.set(qn('w:eastAsia'), 'Consolas')
-    doc.styles['Normal'].font.size = Pt(8)
+    doc.styles['Normal'].font.size = Pt(10)
 
     # 不添加文档头部 - 纯代码模式
 
@@ -265,7 +265,7 @@ def generate_document():
 
     # 保存文档
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    output_filename = f"软著源代码文档_RSCD_60页_{timestamp}.docx"
+    output_filename = f"软著源代码文档_RSCD_80页_{timestamp}.docx"
     output_path = os.path.join(PROJECT_ROOT, output_filename)
 
     doc.save(output_path)
