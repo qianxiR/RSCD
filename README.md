@@ -99,29 +99,40 @@
 
 ```
 RSCD/
-├── Frontend/          # 视图层 - PySide6/Qt6 桌面端
-├── Controller/        # 控制层 - 本地任务调度
+├── Frontend/                # 视图层 - PySide6/Qt6 桌面端
+│   ├── app.py               #   主窗口与首页（统一入口）
+│   ├── widgets.py           #   可缩放影像显示与导航
+│   ├── theme.py             #   深色/浅色主题管理
+│   └── views/               #   功能视图（导入/检测/批量/渔网/训练）
+│       └── common/          #     线程池、线程安全日志、样式、工具
+├── Controller/              # 控制层 - 本地任务调度（无 HTTP 层）
 │   ├── local_service.py     #   前端调用入口（提交/查询任务）
-│   ├── task_manager.py      #   检测任务执行与状态机
-│   ├── detection_service.py #   统一推理分发
-│   └── training_task_manager.py  # 训练任务调度
-├── Backend/           # 模型层 - X3D 网络 + 推理 + GIS 处理
-│   ├── network/       #   神经网络定义（Encoder/Decoder/X3D）
-│   ├── processing/    #   单影像/批量推理脚本（自动探测坐标）
-│   ├── data/          #   数据集与变换
-│   └── evaluation/    #   评估指标
-├── utils/             # 共享工具（路径管理）
-├── checkpoint/        # 模型权重
-├── data/              # 共享数据目录（t1/t2/output）
-├── start_app.py       # 应用启动入口
-└── requirements.txt   # Python 依赖
+│   ├── detection_service.py #   统一推理分发（单影像/批量）
+│   ├── task_manager.py      #   检测任务状态机（pending→running→completed）
+│   ├── training_task_manager.py  # 训练任务调度
+│   └── default_args.py      #   集中推理参数配置
+├── Backend/                 # 模型层 - X3D 网络 + 推理 + GIS 处理
+│   ├── network/             #   Encoder/Decoder/X3D 网络定义
+│   ├── processing/          #   单影像/批量推理（自动探测坐标）
+│   │   ├── common/          #     模型缓存、坐标探测、滑窗、内存、可视化
+│   │   └── raster/          #     GeoTIFF 读写、地理变换、矢量导出
+│   ├── training/            #   训练主循环（train_loop）
+│   ├── data/                #   数据集类与变换
+│   └── evaluation/          #   评估指标（混淆矩阵等）
+├── utils/                   # 共享工具（路径解析、共享目录管理）
+├── scripts/                 # 脚本（prepare_training_data.py 数据准备）
+├── tests/                   # 测试
+├── checkpoint/              # 模型权重（X3D_L.pyth / best_model.pth 等）
+├── data/                    # 运行时目录（t1/t2/output；数据集未纳入版本控制）
+├── start_app.py             # 应用启动入口
+└── requirements.txt         # Python 依赖
 ```
 
 ### 部署步骤
 
 #### 1. 克隆项目
 ```powershell
-git clone <repository-url>
+git clone https://github.com/qianxiR/RSCD.git
 cd RSCD
 ```
 
@@ -133,6 +144,15 @@ pip install -r requirements.txt
 #### 3. 启动桌面应用
 ```powershell
 python start_app.py
+```
+
+> 仓库已内置推理所需模型权重（`checkpoint/`），克隆后即可直接运行变化检测，无需额外下载。
+
+#### 4.（可选）准备训练数据集
+
+训练所需数据集未纳入版本控制，请通过脚本自行生成或准备至 `data/` 目录：
+```powershell
+python scripts\prepare_training_data.py
 ```
 
 ## 使用指南
@@ -185,7 +205,7 @@ python start_app.py
 - **制作人**: qianxiR
 - **完成时间**: 2025年8月31日
 - **邮箱**: support@rsiis.com
-- **项目地址**: https://github.com/your-repo/rsiis-system
+- **项目地址**: https://github.com/qianxiR/RSCD
 
 ---
 
