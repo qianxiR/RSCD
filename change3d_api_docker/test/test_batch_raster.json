@@ -1,6 +1,0 @@
-{
-    "mode": "batch_raster",
-    "before_path": "C:/Users/qianx/Desktop/test_raster1",
-    "after_path": "C:/Users/qianx/Desktop/test_raster2",
-    "output_path": "C:/Users/qianx/Desktop/result_raster"
-  }

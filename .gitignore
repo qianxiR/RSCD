@@ -1,0 +1,56 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ===== 虚拟环境 =====
+.venv/
+venv/
+env/
+ENV/
+
+# ===== IDE / 编辑器 =====
+.idea/
+.vscode/
+.history/
+*.swp
+*.swo
+
+# ===== Claude / 工具缓存 =====
+.claude/
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 运行时临时目录 =====
+temp/
+*.log
+
+# ===== 数据集（大体量，不纳入版本控制；可用 scripts/prepare_training_data.py 重新生成）=====
+data/CD-CD_20/
+data/CD-CD_20_prepared/
+data/test/
+
+# ===== 运行时共享目录内容（由 ensure_shared_dirs() 自动创建，保留目录占位）=====
+data/t1/*
+data/t2/*
+data/output/*
+!data/t1/.gitkeep
+!data/t2/.gitkeep
+!data/output/.gitkeep
+
+# ===== 训练产物 =====
+*.pth
+*.pth.tar
+!checkpoint/*.pth
+!checkpoint/*.pth.tar
+runs/
+wandb/

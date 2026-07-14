@@ -1,27 +1,43 @@
+"""
+RSCD 遥感影像变化检测系统 - 应用入口
+启动 PySide6 桌面应用，初始化共享目录
+"""
 import os
 import sys
-import subprocess
-import shutil
 from pathlib import Path
-import time
+import traceback
+
 import PySide6
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QObject, Signal, QThread, Slot
-import traceback
 
-try:
-    from zhuyaogongneng_docker.app import RemoteSensingApp
-except ImportError:
+
+def _ensure_project_root_in_path():
+    """
+    确保项目根目录在 sys.path 中
+    做什么: 将项目根目录添加到 Python 搜索路径
+    为什么: 启动脚本可能在任意目录执行,需要确保能找到 Frontend/Controller/Backend/utils 包
+    """
     project_root = os.path.dirname(os.path.abspath(__file__))
-    sys.path.insert(0, project_root)
-    from zhuyaogongneng_docker.app import RemoteSensingApp
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
 
-try:
-    import change3d_api_docker.path_connector
-except ImportError:
-    pass
+
+_ensure_project_root_in_path()
+
+from Frontend.app import RemoteSensingApp
+
 
 class Worker(QThread):
+    """
+    后台工作线程,用于执行初始化任务而不阻塞 UI
+
+    入参:
+        task_func: 待执行的无参函数
+        task_name: 任务名称(用于日志)
+    出参:
+        通过信号发射执行状态和结果
+    """
     update_status = Signal(str)
     finished = Signal(bool, str)
 
@@ -31,6 +47,11 @@ class Worker(QThread):
         self.task_name = task_name
 
     def run(self):
+        """
+        执行后台任务
+        做什么: 在子线程中调用 task_func 并通过信号通知主线程
+        为什么: 避免目录清理等 IO 操作阻塞 Qt 主线程导致界面卡顿
+        """
         try:
             self.update_status.emit(f"正在执行: {self.task_name}...")
             success = self.task_func()
@@ -43,59 +64,43 @@ class Worker(QThread):
             self.update_status.emit(error_msg)
             self.finished.emit(False, self.task_name)
 
+
 def setup_shared_directories():
-    try:
-        project_root = os.path.dirname(os.path.abspath(__file__))
-        # 修改路径到正确的位置
-        t1_dir = os.path.join(project_root, "change3d_api_docker", "t1")
-        t2_dir = os.path.join(project_root, "change3d_api_docker", "t2")
-        output_dir = os.path.join(project_root, "change3d_api_docker", "output")
-        
-        # 确保目录存在并设置权限
-        for dir_path in [t1_dir, t2_dir, output_dir]:
-            os.makedirs(dir_path, exist_ok=True)
-            # 设置完全访问权限
-            os.chmod(dir_path, 0o777)
-            print(f"[信息] 创建并设置目录权限: {dir_path}")
-        
-        # 清理现有文件
-        for dir_to_clear in [t1_dir, t2_dir, output_dir]:
-            if os.path.isdir(dir_to_clear):
-                for item in os.listdir(dir_to_clear):
-                    item_path = os.path.join(dir_to_clear, item)
-                    try:
-                        if os.path.isfile(item_path) or os.path.islink(item_path):
-                            os.unlink(item_path)
-                        elif os.path.isdir(item_path):
-                            shutil.rmtree(item_path)
-                    except Exception as e:
-                        print(f"[警告] 清理文件 {item_path} 时出错: {str(e)}")
-                        
-        print("[信息] 共享目录设置完成")
-        return True
-    except Exception as e:
-        print(f"[错误] 设置共享目录时出错: {str(e)}")
-        return False
+    """
+    创建并清理共享数据目录（data/t1, data/t2, data/output）
+
+    入参: 无（路径从 utils.paths 读取统一配置）
+    方法: 转调 utils.paths.ensure_shared_dirs
+    出参: bool，成功返回 True
+
+    做什么: 委托给统一的共享目录初始化入口
+    为什么: 消除历史路径分歧，前端原用 t1/ 后端用 data/t1，现统一为 data/ 子目录
+    """
+    from utils.paths import ensure_shared_dirs, T1_DIR, T2_DIR, OUTPUT_DIR
+
+    print(f"[信息] 共享目录: {T1_DIR} | {T2_DIR} | {OUTPUT_DIR}")
+    return ensure_shared_dirs(clear=True)
+
 
 def run_app():
+    """
+    启动应用主函数
+
+    入参: 无
+    方法: 配置 Qt 插件路径 → 创建 QApplication → 初始化主窗口 → 后台清理 → 启动事件循环
+    出参: 无(调用 sys.exit)
+
+    做什么: 完成所有初始化工作后进入 Qt 事件循环
+    为什么: 分离初始化与 UI 显示,后台清理不阻塞首屏渲染
+    """
     plugin_path = os.path.join(os.path.dirname(PySide6.__file__), "plugins")
     os.environ["QT_PLUGIN_PATH"] = plugin_path
     os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(plugin_path, "platforms")
+
     app = QApplication(sys.argv)
 
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     project_root = os.path.dirname(os.path.abspath(__file__))
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
-    
-    # 添加change3d_api_docker到Python路径
-    change3d_api_path = os.path.join(project_root, "change3d_api_docker")
-    if change3d_api_path not in sys.path:
-        sys.path.insert(0, change3d_api_path)
-        
-    zhuyaogongneng_path = os.path.join(project_root, "zhuyaogongneng_docker")
-    if zhuyaogongneng_path not in sys.path:
-        sys.path.insert(0, zhuyaogongneng_path)
+    os.chdir(project_root)
 
     print("创建主窗口...")
     window = RemoteSensingApp()
